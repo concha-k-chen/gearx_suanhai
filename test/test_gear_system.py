@@ -9,8 +9,8 @@ from scipy.optimize import fsolve
 import pytest
 
 from fealpy.mesh import QuadrangleMesh, HexahedronMesh, IntervalMesh, TetrahedronMesh
-from app.gearx.gear import ExternalGear, InternalGear
-from app.gearx.utils import *
+from gear import *
+from utils import *
 
 
 class TestGearSystem:
