@@ -9,14 +9,14 @@
   "cc": 0.25,
   "rcc": 0.38,
   "jn": 0.1,
-  "n1": 30,
-  "n2": 20,
+  "n1": 20,
+  "n2": 10,
   "n3": 15,
-  "na": 5,
-  "nf": 2,
+  "na": 4,
+  "nf": 3,
   "inner_diam": 60,
   "chamfer_dia": 2,
   "chamfer_angle": 45,
     "tooth_width": 36,
-  "nw": 16
+  "nw": 8
 }

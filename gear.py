@@ -588,8 +588,8 @@ class Gear(ABC):
         tooth_normal_left = np.array([0, -np.cos(rotation), np.sin(rotation)])
 
 
-        t_NN = quad_mesh.number_of_nodes()
-        t_NC = quad_mesh.number_of_cells()
+        t_NN = hex_mesh.number_of_nodes()/(self.nw+1)
+        t_NC = hex_mesh.number_of_cells()/(self.nw+1)
         n1 = self.n1
         nw = self.nw
         hex_node = hex_mesh.node
@@ -1245,10 +1245,10 @@ class ExternalGear(Gear):
             t_1 = length1_n / length_total_n
             t_2 = (1 - t_1) * 0.382
 
-            kp11 = np.array([0, r_inner + (ra - r_inner) * t_1])
+            kp11 = np.array([0, r_inner + (rf - r_inner) * 0.9])
             r_kp11 = kp11[1]
 
-            kp12 = np.array([0, r_inner + (ra - r_inner) * (t_1 + t_2)])
+            kp12 = np.array([0, rf + (ra - rf) * 0.2])
             t14 = 0.382
             kp14 = t14 * kp12 + (1 - t14) * kp6
             kp16 = t14 * kp12 + (1 - t14) * kp8
@@ -1540,12 +1540,12 @@ class ExternalGear(Gear):
             t_1 = length1_n / length_total_n
             t_2 = (1 - t_1) * 0.382
 
-            kp11 = np.array([0, r_inner + (ra - r_inner) * t_1])
+            kp11 = np.array([0, r_inner + (rf - r_inner) * 0.9])
             r_kp11 = kp11[1]
             kp19 = np.array([r_kp11 * np.cos(angle_kp19), r_kp11 * np.sin(angle_kp19)])
             kp22 = np.array([r_kp11 * np.cos(angle_kp22), r_kp11 * np.sin(angle_kp22)])
 
-            kp12 = np.array([0, r_inner + (ra - r_inner) * (t_1 + t_2)])
+            kp12 = np.array([0, rf + (ra - rf) * 0.2])
             t14 = 0.382
             kp14 = t14 * kp12 + (1 - t14) * kp6
             kp16 = t14 * kp12 + (1 - t14) * kp8

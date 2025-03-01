@@ -9,8 +9,8 @@ from scipy.optimize import fsolve
 import pytest
 
 from fealpy.mesh import QuadrangleMesh, HexahedronMesh, IntervalMesh, TetrahedronMesh
-from app.gearx.gear import ExternalGear, InternalGear
-from app.gearx.utils import *
+from gear import ExternalGear, InternalGear
+from utils import *
 
 
 class TestGearSystem:
@@ -518,6 +518,115 @@ class TestGearSystem:
         node_indices_tuple, noe_coord_tuple, profile_node_normal = internal_gear.get_profile_node_index(tooth_tag=0)
 
         print(-1)
+
+    def test_stress_strain_pre(self):
+        with open('../data/external_gear_data.json', 'r') as file:
+            data = json.load(file)
+        m_n = data['mn']  # 法向模数
+        z = data['z']  # 齿数
+        alpha_n = data['alpha_n']  # 法向压力角
+        beta = data['beta']  # 螺旋角
+        x_n = data['xn']  # 法向变位系数
+        hac = data['hac']  # 齿顶高系数
+        cc = data['cc']  # 顶隙系数
+        rcc = data['rcc']  # 刀尖圆弧半径
+        jn = data['jn']  # 法向侧隙
+        n1 = data['n1']  # 渐开线分段数
+        n2 = data['n2']  # 过渡曲线分段数
+        n3 = data['n3']
+        na = data['na']
+        nf = data['nf']
+        nw = data['nw']
+        tooth_width = data['tooth_width']
+        inner_diam = data['inner_diam']  # 轮缘内径
+        # m_n = 2.25
+        # z = 18
+        # alpha_n = 17.5
+        # beta = 30
+        # x_n = 0.4
+        # hac = 1
+        # cc = 1.4
+        # inner_diam = 10
+        chamfer_dia = data['chamfer_dia']  # 倒角高度（直径）
+
+        input_matrix = np.array([
+            # 第 1 步
+            # 第 0 个齿的 -1 齿面（左齿面）
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 4000, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 9000.0, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 9000.1, 527, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 8000, 506, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            # 第 -1 个齿的 1 齿面（右齿面）
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 441.46, 11627, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 1, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+
+            # 第二步
+            # 第 0 个齿的 -1 齿面（左齿面）
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 4000, 200, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 9000.0, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 9000.1, 527, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 8000, 506, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 2, 1, 1, 0, 1, -1, 2, 0, 8494.9, 495.8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            # 第 -1 个齿的 1 齿面（右齿面）
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 441.46, 11627, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            [1, 2, 1, 1, -1, 1, 1, 34, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 217.8, 57381, 0, 0],
+            ])
+
+        total_len = input_matrix.shape[0]
+        step_flag_array = input_matrix[:, 1]
+        # 计算总步数
+        step_num = len(np.unique(step_flag_array))
+        # 计算每步涉及的面数
+        step_face_num = np.zeros(step_num, np.int32)
+        start_step = step_flag_array[0]
+        one_step_line_num = 0
+        step_idx = 0
+        for i in range(len(step_flag_array)):
+            if step_flag_array[i] == start_step:
+                one_step_line_num += 1
+            else:
+                step_face_num[step_idx] = one_step_line_num/(nw+1)
+                start_step = step_flag_array[i]
+                one_step_line_num = 0
+                step_idx += 1
+        step_face_num[-1] = total_len/(nw+1) -np.sum(step_face_num)
+
+        for i in range(step_num):
+            pass
+
+
+        external_gear = ExternalGear(m_n, z, alpha_n, beta, x_n, hac, cc, rcc, jn, n1, n2, n3, na, nf, nw, chamfer_dia,
+                                     inner_diam, tooth_width)
+        total_mesh = external_gear.generate_hexahedron_mesh()
+        hex_mesh = external_gear.set_target_tooth([0, 1, 18])
+
+        profile_node_idx_right, profile_node_idx_left = external_gear.get_profile_node_index(tooth_tag=0)[0]
+        profile_node_normal_right, profile_node_normal_left = external_gear.get_profile_node_normal_with_tooth(tooth_tag=0)
+        hex_mesh.to_vtk(fname='../data/external_hex_mesh_new.vtu')
+
 
 
 
